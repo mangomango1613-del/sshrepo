@@ -50,7 +50,7 @@ jobs:
             --standalone --onefile ^
             --assume-yes-for-downloads ^
             --onefile-tempdir-spec="%%TEMP%%\\PyTermSSH\\runtime\\1.0.0" ^
-            --windows-console-mode=disable ^
+            --windows-console-mode=force ^
             --output-filename=${{ env.APP_NAME }}.exe ^
             --output-dir=dist ^
             --enable-plugin=pyside6 ^
