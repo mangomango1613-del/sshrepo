@@ -74,30 +74,7 @@ jobs:
             --python-flag=no_docstrings,no_warnings ^
             main.py
 
-      - name: Sign exe with commercial certificate (if secret configured)
-        # To enable: add CODE_SIGNING_PFX_BASE64 and CODE_SIGNING_PFX_PASSWORD
-        # to your GitHub repo Secrets (Settings → Secrets → Actions).
-        # See tools/av_whitelist_guide.md for setup instructions.
-        if: ${{ secrets.CODE_SIGNING_PFX_BASE64 != '' }}
-        shell: pwsh
-        env:
-          PFX_B64: ${{ secrets.CODE_SIGNING_PFX_BASE64 }}
-          PFX_PASS: ${{ secrets.CODE_SIGNING_PFX_PASSWORD }}
-        run: |
-          $pfxBytes = [Convert]::FromBase64String($env:PFX_B64)
-          [IO.File]::WriteAllBytes("cert.pfx", $pfxBytes)
-          signtool sign /f cert.pfx /p $env:PFX_PASS `
-            /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 `
-            /d "${{ env.APP_NAME }}" `
-            /du "https://github.com/${{ github.repository }}" `
-            /v dist\${{ env.APP_NAME }}.exe
-          Remove-Item cert.pfx
-          signtool verify /pa /v dist\${{ env.APP_NAME }}.exe
-          Write-Host "Signed successfully - AV warnings eliminated"
-
-      - name: Unblock exe (remove internet zone mark)
-        shell: pwsh
-        run: Unblock-File -Path "dist\${{ env.APP_NAME }}.exe"
+  
 
       - name: Report build info
         shell: pwsh
