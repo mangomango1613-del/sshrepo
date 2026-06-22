@@ -73,7 +73,7 @@ jobs:
             %ICON_ARG% ^
             --company-name=PyTermSSH --product-name=${{ env.APP_NAME }} ^
             --file-version=1.0.0.0 --product-version=1.0.0.0 ^
-            --python-flag=no_docstrings,no_warnings ^
+            --python-flag=no_warnings ^
             main.py
 
   
