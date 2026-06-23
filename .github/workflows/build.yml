@@ -75,28 +75,7 @@ jobs:
             --file-version=1.0.0.0 --product-version=1.0.0.0 ^
             --python-flag=no_warnings ^
             main.py
-
-      - name: Digitally Sign Executable
-        shell: pwsh
-        run: |
-          Write-Host "Generating local code-signing certificate..."
-          # Replaced -ValidityPeriodYears with runner-compatible -NotAfter
-          $cert = New-SelfSignedCertificate -Type CodeSigning -Subject "CN=PyTermSSH-Developer" -NotAfter (Get-Date).AddYears(5)
-          
-          Write-Host "Locating compiled executable..."
-          $exeFile = Get-ChildItem -Path dist -Filter "${{ env.APP_NAME }}.exe" -Recurse | Select-Object -First 1
-          
-          if ($null -eq $exeFile) {
-              Write-Error "Could not find executable to sign!"
-              exit 1
-          }
-          
-          Write-Host "Signing binary: $($exeFile.FullName)"
-          Set-AuthenticodeSignature -FilePath $exeFile.FullName -Certificate $cert
-          
-          Write-Host "Exporting public verification certificate..."
-          Export-Certificate -Cert $cert -FilePath "dist\PyTermSSH_Trusted_Authority.cer"
-          
+      
       - name: Report build info
         shell: pwsh
         run: |
