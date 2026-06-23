@@ -80,7 +80,8 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Generating local code-signing certificate..."
-          $cert = New-SelfSignedCertificate -Type CodeSigning -Subject "CN=PyTermSSH-Developer" -ValidityPeriodYears 5
+          # Replaced -ValidityPeriodYears with runner-compatible -NotAfter
+          $cert = New-SelfSignedCertificate -Type CodeSigning -Subject "CN=PyTermSSH-Developer" -NotAfter (Get-Date).AddYears(5)
           
           Write-Host "Locating compiled executable..."
           $exeFile = Get-ChildItem -Path dist -Filter "${{ env.APP_NAME }}.exe" -Recurse | Select-Object -First 1
@@ -95,7 +96,7 @@ jobs:
           
           Write-Host "Exporting public verification certificate..."
           Export-Certificate -Cert $cert -FilePath "dist\PyTermSSH_Trusted_Authority.cer"
-
+          
       - name: Report build info
         shell: pwsh
         run: |
