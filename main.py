@@ -25,6 +25,10 @@ from ui.vault_select_dialog import VaultSelectDialog
 from ui.master_password_dialog import MasterPasswordDialog
 from ui.main_window import MainWindow
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("paramiko").setLevel(logging.DEBUG)
+
 
 def resolve_vault(force_picker: bool = False):
     """
