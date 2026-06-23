@@ -47,10 +47,9 @@ jobs:
           set ICON_ARG=
           if exist icon.ico set ICON_ARG=--windows-icon-from-ico=icon.ico
           python -m nuitka ^
-            --standalone --onefile ^
+            --standalone ^
             --assume-yes-for-downloads ^
             --prefer-source-code ^
-            --onefile-tempdir-spec="{TEMP}\\PyTermSSH\\{PID}"  ^
             --windows-console-mode=force ^
             --output-filename=${{ env.APP_NAME }}.exe ^
             --output-dir=dist ^
