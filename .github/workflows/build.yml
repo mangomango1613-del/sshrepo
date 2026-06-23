@@ -76,19 +76,33 @@ jobs:
             --python-flag=no_warnings ^
             main.py
 
+      - name: Digitally Sign Executable
+        shell: pwsh
+        run: |
+          Write-Host "Generating local code-signing certificate..."
+          $cert = New-SelfSignedCertificate -Type CodeSigning -Subject "CN=PyTermSSH-Developer" -ValidityPeriodYears 5
+          
+          Write-Host "Locating compiled executable..."
+          $exeFile = Get-ChildItem -Path dist -Filter "${{ env.APP_NAME }}.exe" -Recurse | Select-Object -First 1
+          
+          if ($null -eq $exeFile) {
+              Write-Error "Could not find executable to sign!"
+              exit 1
+          }
+          
+          Write-Host "Signing binary: $($exeFile.FullName)"
+          Set-AuthenticodeSignature -FilePath $exeFile.FullName -Certificate $cert
+          
+          Write-Host "Exporting public verification certificate..."
+          Export-Certificate -Cert $cert -FilePath "dist\PyTermSSH_Trusted_Authority.cer"
+
       - name: Report build info
         shell: pwsh
         run: |
-          # Dynamically search the 'dist' directory to find where Nuitka placed the exe
           $exeFile = Get-ChildItem -Path dist -Filter "${{ env.APP_NAME }}.exe" -Recurse | Select-Object -First 1
-          if ($null -eq $exeFile) {
-              Write-Error "Could not find ${{ env.APP_NAME }}.exe in the build output!"
-              exit 1
-          }
           $exe = $exeFile.FullName
           $exeMb = [math]::Round(($exeFile).Length/1MB, 1)
           
-          # Calculate total folder size of the standalone distribution directory
           $distFolder = $exeFile.Directory.FullName
           $totalBytes = (Get-ChildItem -Path $distFolder -Recurse | Measure-Object -Property Length -Sum).Sum
           $totalMb = [math]::Round($totalBytes/1MB, 1)
@@ -96,13 +110,12 @@ jobs:
           Write-Host "=== Build Complete ==="
           Write-Host "Executable Path: $exe"
           Write-Host "Executable File Size: $exeMb MB"
-          Write-Host "Total Distribution Folder Size: $totalMb MB (Includes BusyBox & Python dependencies)"
+          Write-Host "Total Distribution Folder Size: $totalMb MB"
           $sig = (Get-AuthenticodeSignature $exe).Status
-          Write-Host "Signature: $sig"
+          Write-Host "Signature Status: $sig"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-windows-standalone
-          # Crucial: Upload the whole folder layout. The exe needs its neighboring DLL files to run.
           path: dist/
