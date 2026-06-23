@@ -76,20 +76,33 @@ jobs:
             --python-flag=no_warnings ^
             main.py
 
-  
-
       - name: Report build info
         shell: pwsh
         run: |
-          $exe = "dist\${{ env.APP_NAME }}.exe"
-          $mb = [math]::Round((Get-Item $exe).Length/1MB, 1)
+          # Dynamically search the 'dist' directory to find where Nuitka placed the exe
+          $exeFile = Get-ChildItem -Path dist -Filter "${{ env.APP_NAME }}.exe" -Recurse | Select-Object -First 1
+          if ($null -eq $exeFile) {
+              Write-Error "Could not find ${{ env.APP_NAME }}.exe in the build output!"
+              exit 1
+          }
+          $exe = $exeFile.FullName
+          $exeMb = [math]::Round(($exeFile).Length/1MB, 1)
+          
+          # Calculate total folder size of the standalone distribution directory
+          $distFolder = $exeFile.Directory.FullName
+          $totalBytes = (Get-ChildItem -Path $distFolder -Recurse | Measure-Object -Property Length -Sum).Sum
+          $totalMb = [math]::Round($totalBytes/1MB, 1)
+
           Write-Host "=== Build Complete ==="
-          Write-Host "Size: $mb MB (includes BusyBox Unix environment)"
+          Write-Host "Executable Path: $exe"
+          Write-Host "Executable File Size: $exeMb MB"
+          Write-Host "Total Distribution Folder Size: $totalMb MB (Includes BusyBox & Python dependencies)"
           $sig = (Get-AuthenticodeSignature $exe).Status
           Write-Host "Signature: $sig"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APP_NAME }}-windows
-          path: dist/${{ env.APP_NAME }}.exe
+          name: ${{ env.APP_NAME }}-windows-standalone
+          # Crucial: Upload the whole folder layout. The exe needs its neighboring DLL files to run.
+          path: dist/
